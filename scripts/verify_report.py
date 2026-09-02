@@ -196,10 +196,12 @@ def main():
         ok(f'港股指数 {len(hk)} 项')
     else:
         fail(f'港股指数不足 ({len(hk)})')
-    # 24. 涨幅 TOP15 全量
+    # 24. 涨幅 TOP15 全量 (与 gen_report 3.1 同口径: 按涨幅降序取 15)
+    zt_sorted = sorted([x for x in ztpool if isinstance(x, list) and len(x) > 8],
+                       key=lambda x: -(float(x[2]) if str(x[2]).replace('.', '', 1).replace('-', '', 1).isdigit() else 0))
     missing15 = []
-    for x in ztpool[:15]:
-        if isinstance(x, list) and len(x) > 1 and x[1] not in body:
+    for x in zt_sorted[:15]:
+        if x[1] not in body:
             missing15.append(x[1])
     if not missing15:
         ok('涨幅 TOP15 全部存在 (缺失: [])')
@@ -215,14 +217,23 @@ def main():
                 ok(f'成交额TOP1 {t[1]}')
             else:
                 fail(f'成交额TOP1 缺失: {t[1]}')
-    # 26. 涨停全量 (ztpool 股票在 4.2 详表)
-    missing_all = []
-    sec4 = body.split('### 4.2')[1] if '### 4.2' in body else ''
-    for x in ztpool:
-        if isinstance(x, list) and len(x) > 1 and x[1] not in body:
-            missing_all.append(x[1])
+    # 26. 涨停全量 (基准: zthis_sectors.json — §4 详表渲染来源; ztpool 可能含口径外股票)
+    zs = None
+    for cand in (os.path.join(DESKTOP, 'zthis_sectors.json'),
+                 os.path.join(os.path.dirname(os.path.abspath(__file__)), 'zthis_sectors.json')):
+        if os.path.isfile(cand):
+            try:
+                zs = json.load(open(cand, encoding='utf-8'))
+                break
+            except Exception:
+                pass
+    zthis_names = []
+    for s in (zs or {}).get('sectors') or []:
+        for st in s.get('stocks') or []:
+            zthis_names.append(st.get('name'))
+    missing_all = [n for n in zthis_names if n and n not in body]
     if not missing_all:
-        ok('涨停全量 (缺失: [])')
+        ok(f'涨停全量 ({len(zthis_names)} 只 zthis 股票全在报告, 缺失: [])')
     else:
         fail(f'涨停全量缺失 {len(missing_all)}: {missing_all[:5]}')
     # 27. mermaid graph

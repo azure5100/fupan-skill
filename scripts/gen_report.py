@@ -451,7 +451,8 @@ for cand in (os.path.join(DESKTOP, 'zthis_sectors.json'), os.path.join(SCRIPT_DI
 _sectors = (_zs or {}).get('sectors') or []
 # v2.9.2: 按涨停数降序 (zthis json 页面顺序 ≠ 报告热度顺序)
 _sectors.sort(key=lambda s: -(s.get('zt_count') or 0))
-_top13 = _sectors[:13]
+# 全量渲染 (标题"TOP13"为历史遗留名, 板块 >13 时渲染全部 — 8/28 14板块版先例)
+_top13 = _sectors
 
 m.append('## 四、市场题材全景图')
 m.append('')
