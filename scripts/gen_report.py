@@ -244,30 +244,31 @@ m.append('|---|---|---|---|')
 m.append('')
 
 
-def _emo(label, key, suf=''):
+def _emo(label, key, suf='', signed=False):
     v = EMOTION_NOW.get(key)
     if v is None:
         return f'| {label} | **—** |'
     if isinstance(v, float):
-        s = _fmt_pct(v)
+        # HSLN 主力净流入带符号 (历史格式: +495 亿 / -344 亿)
+        s = f'{v:+.0f}' if signed else _fmt_pct(v)
     else:
         s = str(v)
     return f'| {label} | **{s}{suf}** |'
 
 
 panel_rows = [
-    ('情绪指标', 'QX', ''), ('涨停家数', 'ZT', ''),
-    ('跌停家数', 'DT', ''), ('亏钱效应', 'KQXY', ''),
-    ('主力净流入', 'HSLN', ' 亿'), ('连板高度', 'LBGD', ''),
-    ('上涨家数', 'SZ', ''), ('下跌家数', 'XD', ''),
-    ('封板率', 'PB', '%'), ('昨涨停表现', 'ZTBX', '%'),
-    ('昨连板表现', 'LBBX', '%'), (None, None, None),
+    ('情绪指标', 'QX', '', False), ('涨停家数', 'ZT', '', False),
+    ('跌停家数', 'DT', '', False), ('亏钱效应', 'KQXY', '', False),
+    ('主力净流入', 'HSLN', ' 亿', True), ('连板高度', 'LBGD', '', False),
+    ('上涨家数', 'SZ', '', False), ('下跌家数', 'XD', '', False),
+    ('封板率', 'PB', '%', False), ('昨涨停表现', 'ZTBX', '%', False),
+    ('昨连板表现', 'LBBX', '%', False), (None, None, None, None),
 ]
 for i in range(0, len(panel_rows), 2):
-    l1, k1, s1 = panel_rows[i]
-    l2, k2, s2 = panel_rows[i + 1]
-    left = _emo(l1, k1, s1) if l1 else '|  | **—** |'
-    right = _emo(l2, k2, s2) if l2 else '|  | **** |'
+    l1, k1, s1, g1 = panel_rows[i]
+    l2, k2, s2, g2 = panel_rows[i + 1]
+    left = _emo(l1, k1, s1, g1) if l1 else '|  | **—** |'
+    right = _emo(l2, k2, s2, g2) if l2 else '|  | **** |'
     m.append(f'{left} {right}')
     m.append('')
 m.append('')

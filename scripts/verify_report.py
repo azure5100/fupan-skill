@@ -154,13 +154,13 @@ def main():
         ok(f'情绪指标 {_qx_exp:.1f}')
     else:
         fail(f'情绪指标验证失败 (期望 {_qx_exp})')
-    # 18. 主力净流入
+    # 18. 主力净流入 (报告格式: +495 亿 / -344 亿)
     if _hsln_exp is not None:
         hsln_s = f'{_hsln_exp:+.0f}' if isinstance(_hsln_exp, float) else str(_hsln_exp)
         if hsln_s in body:
             ok(f'主力净流入 {hsln_s}')
         else:
-            fail(f'主力净流入验证失败 (期望 {hsln_s})')
+            fail(f'主力净流入验证失败 (期望 {hsln_s}, 报告含 {hsln_s} 亿?)')
     # 19. 涨停数一致 (2.1 面板 vs 2.2 统计)
     zt_counts = re.findall(r'\*\*(\d+)\*\*', body)
     if _zt_exp is not None and str(int(_zt_exp)) in zt_counts:
