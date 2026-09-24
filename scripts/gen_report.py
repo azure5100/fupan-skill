@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-gen_report.py - fupan v2.9.16 (2026-08-31 重建版, 从 SKILL.md changelog + 历史报告格式恢复)
+gen_report.py - fupan v2.9.18 (2026-09-24 家数口径统一 + xychart 语法修复)
 
 生成 A股市场复盘报告 (Markdown):
   §1 市场概览 (1.1 A股指数 / 1.2 全球对比) ← global.json
@@ -290,6 +290,11 @@ _cz_n = len(_cz_list)
 _dm_n = len(_dm_list)
 _fx_n = len(_fx_list)
 
+# v2.9.18: vision 优先口径 — 2.2 面板 / 复盘总结 / 日志 统一用解析后的家数
+# (9/24: pool 涨停 51 只 vs vision 52 家, 总结误显 51 与面板矛盾)
+_zt_v = int(_zt or _zt_n)
+_dt_v = int(_dt or _dt_n)
+
 _zbr = _zb_n / (_zt_n + _zb_n) * 100 if (_zt_n + _zb_n) else 0
 _zbmx = max((int(x[4]) for x in _zb_list if isinstance(x, list) and len(x) > 4), default=0)
 
@@ -305,13 +310,13 @@ def _stat(label, val, src):
     return f'| {label} | **{val}** | {src} |'
 
 
-m.append(_stat('涨停家数', int(_zt or _zt_n), 'vision 真实值'))
+m.append(_stat('涨停家数', _zt_v, 'vision 真实值'))
 m.append('')
 m.append(_stat('连板家数', _lb_n, 'pool 实时'))
 m.append('')
 m.append(_stat('炸板', _zb_n, 'pool 实时'))
 m.append('')
-m.append(_stat('跌停家数', int(_dt or _dt_n), 'vision 真实值'))
+m.append(_stat('跌停家数', _dt_v, 'vision 真实值'))
 m.append('')
 m.append(f'| 冲涨 | {_cz_n} | pool 实时 |')
 m.append('')
@@ -635,7 +640,7 @@ for x in sorted(_zb_list, key=lambda v: -(int(v[4]) if isinstance(v, list) and l
     m.append('')
 m.append('')
 
-# ── 成交额可视化 (xychart, v2.9.13 引号修复) ──
+# ── 成交额可视化 (xychart, v2.9.18 修复: 原 f-string 花括号内含逗号 → 被解析成元组) ──
 _names = [x[1] for x in _amt_sorted[:10]]
 _vals = [f'{(float(x[3]) / 1e8):.1f}' for x in _amt_sorted[:10]]
 m.append('### 成交额可视化')
@@ -644,9 +649,11 @@ m.append('xychart-beta')
 m.append('')
 m.append('    title "成交额 TOP10（亿元）"')
 m.append('')
-m.append(f'    x-axis ["{"", "".join(_names)}"]')
+_xaxis = ', '.join(f'"{n}"' for n in _names)
+_bars = ', '.join(_vals)
+m.append(f'    x-axis [{_xaxis}]')
 m.append('')
-m.append(f'    bar ["{"", "".join(_vals)}"]')
+m.append(f'    bar [{_bars}]')
 m.append('')
 m.append('```')
 m.append('')
@@ -657,13 +664,13 @@ _top_s = _sectors[0] if _sectors else None
 m.append('## 📝 复盘总结')
 m.append('')
 if _top_s:
-    m.append(f'**主线判断**：{_top_s.get("name")}（{_top_s.get("zt_count")}涨停）领涨，涨停 {_zt_n} 家。')
+    m.append(f'**主线判断**：{_top_s.get("name")}（{_top_s.get("zt_count")}涨停）领涨，涨停 {_zt_v} 家。')
 else:
-    m.append(f'**主线判断**：涨停 {_zt_n} 家。')
+    m.append(f'**主线判断**：涨停 {_zt_v} 家。')
 m.append('')
 m.append(f'**情绪周期**：情绪指标 {_qx_v:.1f}（{_zone}区间），封板率 {_fmt_pct(_pb_v)}%，连扳高度 {_lbgd} 板。')
 m.append('')
-m.append(f'**赚钱效应**：涨停 {_zt_n} / 跌停 {_dt_n} / 炸板 {_zb_n}。')
+m.append(f'**赚钱效应**：涨停 {_zt_v} / 跌停 {_dt_v} / 炸板 {_zb_n}。')
 m.append('')
 m.append('')
 m.append('---')
@@ -681,4 +688,4 @@ with open(out_path, 'w', encoding='utf-8') as f:
     f.write(content)
 print(f'✅ 报告产出: {out_path}')
 print(f'   大小: {len(content):,} 字符 · {len(m)} 行')
-print(f'[fupan] 涨停{_zt_n} 跌停{_dt_n} 连扳{_lb_n} 封板率{(_zt_n / (_zt_n + _zb_n) * 100 if (_zt_n + _zb_n) else 0):.2f}%')
+print(f'[fupan] 涨停{_zt_v} 跌停{_dt_v} 连扳{_lb_n} 封板率{(_zt_n / (_zt_n + _zb_n) * 100 if (_zt_n + _zb_n) else 0):.2f}%')
